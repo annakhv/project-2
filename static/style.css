@@ -1,0 +1,172 @@
+
+header  {
+       
+        min-height: 50px;
+        padding: 20px;
+        background-color: rgb(127, 224, 192);
+
+
+}
+
+body {
+    background-color: rgb(189, 224, 213);
+}
+
+.answer {
+
+    font-size: larger;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+
+main{
+  
+    padding: 50px;
+    max-height: 100px;
+    
+ 
+}
+
+#lastRow{
+    display:flex;
+    flex-direction: column;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    color: rgb(13, 6, 54);
+    align-self: center;
+    
+    
+    
+    
+}
+
+#userTitle{
+    font-weight: 300;
+    font-size: x-large;
+    width: 200px;
+    padding: 30px;
+    text-align: center;
+    height: 40px;
+    border-radius: 20px;
+    background-color:  rgb(158, 216, 197);
+}
+#userList {
+    width: 200px;
+    padding:30px;
+    border-radius: 20px;
+    background-color:  rgb(158, 216, 197);
+    max-height: 400px;
+    overflow: auto;
+    position: absolute;
+
+}
+.button1 {
+    
+    background-color: rgb(68, 201, 206);
+    border: 2px solid  rgb(187, 199, 216);
+    border-radius: 10px;
+    padding: 4px 10px 4px 10px;
+}
+.button1:hover{
+    background-color: darkcyan;
+}
+
+
+.container{
+ 
+    width: 90%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+ button {  
+   
+    background-color: rgb(68, 201, 206);
+    padding: 10px;
+    margin: 7px;
+    border: 2px solid rgb(187, 199, 216);
+    height: 200px;
+    width: 150px;
+    border-radius: 10px;
+    word-wrap: break-word;
+    transition: 0.5s;
+}
+
+.container > div{
+   
+    width: 25%;
+
+ 
+}
+
+button:hover {
+    background-color: darkcyan;
+    height: 210px;
+    width: 160px;
+}
+.listOfChannels {
+    width: 70%;
+  
+}
+ul{
+    list-style-type: none;
+   
+}
+
+.putcenter{
+    text-align:center;
+}
+
+.hidden {
+    display: none;
+}
+
+.border{
+    display:flex;
+    justify-content: center;
+    
+}
+
+.messages{
+    padding:10px;
+    background-color: rgb(176, 216, 216);
+    min-width: 400px;
+    max-width: 400px;
+    min-height: 340px;
+    max-height: 340px;
+    border: 2px solid rgb(195, 223, 223);
+    border-radius: 10px;
+    overflow: auto;
+    word-wrap: break-word;
+    position: absolute;
+}
+
+
+
+.container1{
+    padding:20px;
+    display: flex;
+    justify-content: space-evenly;
+
+    
+}
+
+
+.box2{
+ flex-grow: 1;
+
+}
+
+a:link, a:visited {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size:larger;
+    font-weight: 200;
+    color: darkslateblue;
+    text-decoration:none;  
+    cursor:pointer;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 20px;
+  }
