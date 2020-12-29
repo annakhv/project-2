@@ -58,15 +58,9 @@ socket.on("existing channels", function(data){
 socket.on('announce user disconnect', function(data) {
        const ul = document.getElementById('userList');
        const names =ul.getElementsByTagName('li');
-       deleteOneUser(data.user, names, ul)
-    /*   for(i=0; i< names.length; i++) {
-           if (names[i].innerHTML === data.user) {
-               ul.removeChild(names[i]);
-               break;
-           }
-       }  
-
-       */
+       console.log("disconnect");
+       deleteOneUser(data.user, ul, names)
+     
    });
 
 
@@ -147,7 +141,6 @@ socket.emit('join', {'user': userName , 'room':room });
 }
 
 socket.on("userJoined", function(data) {
-    console.log(data.user);
     thisRoomUser(data.user)
 
 });
@@ -168,14 +161,8 @@ socket.emit('getHistory', { 'room':room });
 socket.on("send history", function(data) {
    writeHistory(data.roomInfo)
    const users=data.usersInfo;
-   console.log(users);
-   console.log(users[(users.length-1)]);
-       for(i=users.length; i>=0; i--){
-           if (users[i] === userName){
-               users.splice(i, 1)
-           }
-  
-       }
+   users.splice(users.length-1, 1); //delete last user to avoid duplication 
+       console.log(users);
     if (users.length>0){
        for(i=0; i<users.length; i++){
            thisRoomUser(users[i]);
@@ -258,7 +245,6 @@ window.onpopstate = function() {
 
 function back() {
        leave()
-       logOutUser(userName)
        deleteUsers()
        clearBoard()
        document.querySelector("#form").classList.remove("hidden");
@@ -298,18 +284,12 @@ function logOutUser(user) {
     const ul = document.getElementById("thisRoomUsers");
     const names =ul.getElementsByTagName('li');
     deleteOneUser(user, names, ul)
-     /*  for(i=0; i< names.length; i++) {
-            console.log(names[i]);
-           if (names[i].innerHTML === user) {
-               ul.removeChild(names[i]);
-               break;
-           }
-       }
-       */
+     
 }
 
 
-function deleteOneUser (user, names, ul){
+function deleteOneUser (user, ul, names){
+    console.log(user);
     for(i=0; i< names.length; i++) {
            if (names[i].innerHTML === user) {
                ul.removeChild(names[i]);
@@ -320,12 +300,17 @@ function deleteOneUser (user, names, ul){
 
 }
 function deleteUsers(){
-    const ul = document.getElementById("thisRoomUsers");
-    const names =ul.getElementsByTagName('li');
+     const ul = document.getElementById("thisRoomUsers");
+     console.log(ul);
+     const names =ul.getElementsByTagName('li');
+     console.log(names);
     if (names.length>0){
-        for(i=0; i< names.length; i++) {
+        for(i=names.length-1; i>=0; i--) {  // doing deletion backwards not to  mix things  during deletion
+             console.log(names[i]);
           ul.removeChild(names[i]);
+         
        }
+   
     }
 }
 

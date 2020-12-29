@@ -170,3 +170,9 @@ a:link, a:visited {
   ::-webkit-scrollbar {
     width: 20px;
   }
+
+  
+
+  [type="file"]{
+      margin-right: 188px;
+  }

@@ -19,8 +19,9 @@ def index():
 @socketio.on("userConnects")
 def connection(data):
     user=data['user']
-    users[request.sid]=user
-    emit('announce user', {'user': user}, broadcast=True)
+    if users.get(request.sid) == None:
+       users[request.sid]=user
+       emit('announce user', {'user': user}, broadcast=True)
 
 @socketio.on("existingChannels")
 def existingChannels(data):
@@ -31,12 +32,14 @@ def existingChannels(data):
     for id in users:
         if id != request.sid:
            savedUsers.append(users[id])
+    print(savedUsers)
     emit("existing channels",{'existing': savedChannels, 'existingUsers': savedUsers} , room=request.sid)
 
 @socketio.on("disconnect")
 def disconnect():
     user= users[request.sid]
-    if users.get(user):  del users[request.sid]  
+    del users[request.sid] 
+     
     emit('announce user disconnect', {'user': user}, broadcast=True)
 
 @socketio.on('create')
@@ -76,7 +79,8 @@ def history(data):
     usersInfo=usersInRoom[room]
     if roomInfo.get(room)!= None:
         info=roomInfo[room]
-    else: info =[]
+    else: 
+        info =[]
     emit('send history', { 'roomInfo': info, 'usersInfo':usersInfo}, room=request.sid) 
 
 
