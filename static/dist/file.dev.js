@@ -4,18 +4,15 @@ if (localStorage.getItem('user') == null) {
   var user = prompt("enter your name", "guest");
 } else {
   var user = localStorage.getItem('user');
-  console.log(user);
 }
 
-console.log("print");
+var userName = user;
 document.addEventListener('DOMContentLoaded', function () {
-  //  setInterval(name, 1000);
   name();
 });
 
 function name() {
-  console.log(user);
-  document.querySelector('#name').innerHTML = "welcome " + user;
+  document.querySelector('#name').innerHTML = "welcome " + userName;
   localStorage.setItem('user', user);
 }
 
@@ -23,24 +20,44 @@ var socket = io.connect(location.protocol + '//' + document.domain + ':' + locat
 document.addEventListener('DOMContentLoaded', function () {
   socket.on('connect', function () {
     socket.emit('userConnects', {
-      'user': user
+      'user': userName
     });
   });
   socket.on("announce user", function (data) {
-    var li = document.createElement('li');
-    li.innerHTML = data.user;
-    document.querySelector("#userList").append(li);
+    one = data.user;
+    addUsers(one);
   });
+});
+
+window.onload = function () {
+  socket.emit("existingChannels", {
+    'user': userName
+  });
+};
+
+socket.on("existing channels", function (data) {
+  var existing = data.existing;
+
+  if (existing.length > 0) {
+    for (i = 0; i < existing.length; i++) {
+      singleChannel = existing[i];
+      oneChannel(singleChannel);
+    }
+  }
+
+  var presentUsers = data.existingUsers;
+
+  if (presentUsers.length > 0) {
+    for (j = 0; j < presentUsers.length; j++) {
+      addUsers(presentUsers[j]);
+    }
+  }
 });
 socket.on('announce user disconnect', function (data) {
   var ul = document.getElementById('userList');
   var names = ul.getElementsByTagName('li');
-
-  for (i = 0; i < names.length; i++) {
-    if (names[i].innerHTML === data.user) {
-      ul.removeChild(names[i]);
-    }
-  }
+  console.log("disconnect");
+  deleteOneUser(data.user, ul, names);
 });
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#form').addEventListener('submit', function (event) {
@@ -52,22 +69,19 @@ document.addEventListener('DOMContentLoaded', function () {
 function create() {
   channel = document.querySelector('#channel').value;
   document.querySelector("#form").reset();
-  var request = new XMLHttpRequest();
-  request.open('POST', '/create');
-
-  request.onload = function () {
-    var response = JSON.parse(request.responseText);
-    document.querySelector('#create').innerHTML = response;
-
-    if (response.includes("this name is already used") == false) {
-      go(response);
-    }
-  };
-
-  var data = new FormData();
-  data.append('channel', channel);
-  request.send(data);
+  socket.emit('create', {
+    'channel': channel
+  });
 }
+
+socket.on('answerToCreate', function (data) {
+  if (data.hasOwnProperty('channel')) {
+    document.querySelector('#create').innerHTML = data.channel;
+    go(data.channel);
+  } else {
+    document.querySelector('#create').innerHTML = data.mess;
+  }
+});
 
 function go(channel) {
   socket.emit('show channels', {
@@ -76,17 +90,22 @@ function go(channel) {
 }
 
 socket.on('announce channel', function (data) {
+  oneChannel(data.channel);
+});
+
+function oneChannel(name) {
   var a = document.createElement('a');
   a.setAttribute('class', 'chat-name');
-  a.setAttribute('data-page', data.channel);
-  var linkText = document.createTextNode(data.channel);
+  a.setAttribute('data-page', name);
+  var linkText = document.createTextNode(name);
   a.appendChild(linkText); //const url=`channel/${data.channel}`;
 
   a.href = "";
   var button = document.createElement('button');
   button.appendChild(a);
   document.querySelector("#list").append(button);
-});
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#list').addEventListener('click', function (event) {
     event.preventDefault();
@@ -100,36 +119,65 @@ function rooms() {
     channel.onclick = function () {
       room = channel.getAttribute('data-page');
       window["var"] = room;
-      document.querySelector("#form").classList.add("hidden");
-      document.querySelector("#chatRoom").classList.remove("hidden");
-      document.querySelector("#list").classList.add("hidden");
-      document.querySelector("#create").classList.add("hidden");
-      document.querySelector("#lastRow").classList.add("hidden");
-      document.querySelector("#back").classList.remove("hidden");
-      document.querySelector("#mess").classList.remove("hidden");
-      document.querySelector("#roomUsers").classList.remove("hidden");
-      join(room);
+      forward(room);
     };
   });
 }
 
 function join(room) {
   socket.emit('join', {
-    'user': user,
+    'user': userName,
     'room': room
   });
 }
 
 socket.on("userJoined", function (data) {
-  console.log(data);
-  var li = document.createElement('li');
-  li.innerHTML = data.user;
-  document.querySelector("#thisRoomUsers").append(li);
+  thisRoomUser(data.user);
+});
 
-  if (data.hasOwnProperty('roomInfo')) {
-    console.log(data.roomInfo);
-    writeHistory(data.roomInfo);
+function thisRoomUser(user) {
+  var li = document.createElement('li');
+  li.innerHTML = user;
+  document.querySelector("#thisRoomUsers").append(li);
+}
+
+function getHistory(room) {
+  socket.emit('getHistory', {
+    'room': room
+  });
+}
+
+socket.on("send history", function (data) {
+  writeHistory(data.roomInfo);
+  var users = data.usersInfo;
+  console.log(users);
+  users.pop(); //delete last user to avoid duplication 
+
+  console.log(users);
+
+  if (users.length > 0) {
+    for (i = 0; i < users.length; i++) {
+      thisRoomUser(users[i]);
+    }
   }
+});
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelector("#file").addEventListener('change', function (event) {
+    //sending image data as message
+    var reader = new FileReader();
+    reader.addEventListener('load', function (event) {
+      result = event.target.result;
+
+      document.querySelector('#chatRoom').onclick = function (event) {
+        event.preventDefault();
+        document.querySelector('#message').innerHTML = result;
+        console.log(result.length);
+        sendMessage();
+        document.querySelector('#message').innerHTML = "";
+      };
+    });
+    reader.readAsDataURL(event.target.files[0]);
+  });
 });
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#chatRoom').addEventListener('submit', function (event) {
@@ -139,13 +187,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function sendMessage() {
+  console.log("seeeeend");
   var text = document.querySelector('#message').value;
   document.querySelector('#chatRoom').reset();
-  console.log(user);
-  console.log;
-  console.log("mistake????heree");
   socket.emit("message", {
-    'user': user,
+    'user': userName,
     'text': text,
     'room': window["var"]
   });
@@ -153,38 +199,102 @@ function sendMessage() {
 
 socket.on("announce message", function (data) {
   console.log("message is recieved");
+  var stamp = data.stamp;
   var person = data.user;
-  var mess = data.message;
-  writeMessage(person, mess);
+
+  if (data.hasOwnProperty('message')) {
+    var _mess = data.message;
+    writeMessage(person, _mess, stamp);
+  } else {
+    var pic = data.picture;
+    writePicture(person, pic, stamp);
+  }
 });
 
-function writeMessage(id, text) {
+function writeMessage(id, text, stamp) {
   id = document.createTextNode(id);
   mess = document.createTextNode(text);
+  stamp = document.createTextNode(stamp);
+  empty = document.createTextNode("  ");
   var li = document.createElement('li');
   var h4 = document.createElement('h4');
   h4.appendChild(id);
+  h4.appendChild(empty);
+  h4.appendChild(stamp); // var img = document.createElement('img'); 
+  //  img.src =text
+  //   li.appendChild(img);
+
   li.appendChild(mess);
   document.querySelector(".messages").append(h4);
   document.querySelector(".messages").append(li);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  document.querySelector('#back').addEventListener('click', function (event) {
-    event.preventDefault();
-    back();
-  });
+function writePicture(id, picture, stamp) {
+  //repeates above code , needs correction
+  id = document.createTextNode(id);
+  mess = document.createTextNode(picture);
+  stamp = document.createTextNode(stamp);
+  empty = document.createTextNode("  ");
+  var li = document.createElement('li');
+  var h4 = document.createElement('h4');
+  h4.appendChild(id);
+  h4.appendChild(empty);
+  h4.appendChild(stamp);
+  var img = document.createElement('img');
+  img.src = picture;
+  li.appendChild(img);
+  document.querySelector(".messages").append(h4);
+  document.querySelector(".messages").append(li);
+}
+/* document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('#back').addEventListener('click', function(event){
+                          event.preventDefault()
+                          back()
+                          
+    });
 });
+
+*/
+
+
+function forward(room) {
+  document.querySelector("#form").classList.add("hidden");
+  document.querySelector("#chatRoom").classList.remove("hidden");
+  document.querySelector("#list").classList.add("hidden");
+  document.querySelector("#create").classList.add("hidden");
+  /* document.querySelector("#lastRow").classList.add("hidden"); */
+
+  document.querySelector("#userTitle").classList.add("hidden");
+  document.querySelector("#userList").classList.add("hidden");
+  /*document.querySelector("#back").classList.remove("hidden"); */
+
+  document.querySelector("#mess").classList.remove("hidden");
+  document.querySelector("#roomUsers").classList.remove("hidden");
+  join(room);
+  getHistory(room);
+  document.title = room;
+  history.pushState({}, room, room);
+}
+
+window.onpopstate = function () {
+  document.title = 'main page';
+  back();
+};
 
 function back() {
   leave();
+  deleteUsers();
   clearBoard();
   document.querySelector("#form").classList.remove("hidden");
   document.querySelector("#chatRoom").classList.add("hidden");
   document.querySelector("#list").classList.remove("hidden");
   document.querySelector("#create").classList.remove("hidden");
-  document.querySelector("#lastRow").classList.remove("hidden");
-  document.querySelector("#back").classList.add("hidden");
+  /*  document.querySelector("#lastRow").classList.remove("hidden"); */
+
+  document.querySelector("#userTitle").classList.remove("hidden");
+  document.querySelector("#userList").classList.remove("hidden");
+  /*    document.querySelector("#back").classList.add("hidden");   */
+
   document.querySelector("#roomUsers").classList.add("hidden");
   document.querySelector("#mess").classList.add("hidden");
 }
@@ -198,40 +308,74 @@ function clearBoard() {
 }
 
 function leave() {
-  console.log(user);
   socket.emit("leave", {
-    'user': user,
+    'user': userName,
     'room': window["var"]
   });
 }
 
 socket.on("userLeft", function (data) {
-  console.log("logout");
+  var name = data.user;
+  logOutUser(name);
+});
+
+function logOutUser(user) {
   var ul = document.getElementById("thisRoomUsers");
   var names = ul.getElementsByTagName('li');
+  deleteOneUser(user, names, ul);
+}
+
+function deleteOneUser(user, ul, names) {
+  console.log(user);
 
   for (i = 0; i < names.length; i++) {
-    console.log(names[i]);
+    if (names[i].innerHTML === user) {
+      ul.removeChild(names[i]);
+      break;
+    }
+  }
+}
 
-    if (names[i].innerHTML === data.user) {
+function deleteUsers() {
+  var ul = document.getElementById("thisRoomUsers");
+  console.log(ul);
+  var names = ul.getElementsByTagName('li');
+  console.log(names);
+
+  if (names.length > 0) {
+    for (i = names.length - 1; i >= 0; i--) {
+      // doing deletion backwards not to  mix things  during deletion
+      console.log(names[i]);
       ul.removeChild(names[i]);
     }
   }
-});
+}
 
 function writeHistory(info) {
-  for (i = 0; i < info.length; i++) {
-    console.log(info);
-    data = info[i];
-    user = data["user"];
-    text = data["text"];
-    user = document.createTextNode(user);
-    mess = document.createTextNode(text);
-    var li = document.createElement('li');
-    var h4 = document.createElement('h4');
-    h4.appendChild(user);
-    li.appendChild(mess);
-    document.querySelector(".messages").append(h4);
-    document.querySelector(".messages").append(li);
+  if (info.length > 0) {
+    for (i = 0; i < info.length; i++) {
+      data = info[i];
+      user = data["user"];
+      text = data["text"];
+      stamp = data["stamp"];
+      user = document.createTextNode(user);
+      mess = document.createTextNode(text);
+      stamp = document.createTextNode(stamp);
+      empty = document.createTextNode("  ");
+      var li = document.createElement('li');
+      var h4 = document.createElement('h4');
+      h4.appendChild(user);
+      h4.appendChild(empty);
+      h4.appendChild(stamp);
+      li.appendChild(mess);
+      document.querySelector(".messages").append(h4);
+      document.querySelector(".messages").append(li);
+    }
   }
+}
+
+function addUsers(one) {
+  var li = document.createElement('li');
+  li.innerHTML = one;
+  document.querySelector("#userList").append(li);
 }

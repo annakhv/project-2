@@ -103,7 +103,15 @@ def message(data):
     message= data['text']
     time=datetime.datetime.now()
     stamp=time.timestamp()
-    info = { 'user' : user,
+
+    if len(message) > 2000: # assume that string of this length is data sent from file
+       info={'user' : user,
+              'picture': message,
+              'stamp': stamp
+
+        }
+    else:  
+       info = { 'user' : user,
               'text': message,
               'stamp': stamp
     }
@@ -117,8 +125,9 @@ def message(data):
         textList.append(info)
         if len(textList) > 100:
            textList.remove[0]
-    emit('announce message', {'user' : user ,'message': message, 'stamp': stamp}, room=room )
-
-
+    if len(message) > 2000:
+        emit('announce message', {'user' : user ,'picture': message, 'stamp': stamp}, room=room )
+    else: 
+         emit('announce message', {'user' : user ,'message': message, 'stamp': stamp}, room=room )
 
 

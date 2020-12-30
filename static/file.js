@@ -112,6 +112,9 @@ function oneChannel(name) {
        button.appendChild(a);
        document.querySelector("#list").append(button);
 
+
+
+
 }
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#list').addEventListener('click', function(event){
@@ -161,13 +164,37 @@ socket.emit('getHistory', { 'room':room });
 socket.on("send history", function(data) {
    writeHistory(data.roomInfo)
    const users=data.usersInfo;
-   users.splice(users.length-1, 1); //delete last user to avoid duplication 
+   console.log(users);
+   users.pop(); //delete last user to avoid duplication 
        console.log(users);
     if (users.length>0){
        for(i=0; i<users.length; i++){
            thisRoomUser(users[i]);
      }
        }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+document.querySelector("#file").addEventListener('change', function(event){ //sending image data as message
+     
+      
+        var reader=new FileReader();
+        reader.addEventListener('load', function(event) {
+        result= event.target.result;
+        document.querySelector('#chatRoom').onclick = function(event){
+        event.preventDefault()
+        document.querySelector('#message').innerHTML=result;
+        console.log(result.length);
+        sendMessage()
+         
+        document.querySelector('#message').innerHTML="";
+      
+        }
+     
+     });
+        reader.readAsDataURL(event.target.files[0]);
+         
+    } );
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -178,6 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
  });
 
 function sendMessage() {
+    console.log("seeeeend");
     const text=document.querySelector('#message').value;
     document.querySelector('#chatRoom').reset();
     socket.emit("message", {'user': userName, 'text': text, 'room': window.var});
@@ -189,9 +217,16 @@ socket.on("announce message", function(data) {
     console.log("message is recieved");
     const stamp=data.stamp;
     const person=data.user;
-    const  mess=data.message;
-    writeMessage(person, mess, stamp);
-});
+    if (data.hasOwnProperty('message')){
+       const  mess=data.message;
+       writeMessage(person, mess, stamp);
+    }
+    else{
+       const pic=data.picture;
+       writePicture(person, pic, stamp)
+    }
+}
+
 
 function writeMessage(id, text, stamp) {
        id= document.createTextNode(id);
@@ -203,9 +238,32 @@ function writeMessage(id, text, stamp) {
        h4.appendChild(id);
        h4.appendChild(empty);
        h4.appendChild(stamp);
+      // var img = document.createElement('img'); 
+      //  img.src =text
+     //   li.appendChild(img);
        li.appendChild(mess);
        document.querySelector(".messages").append(h4); 
        document.querySelector(".messages").append(li); 
+
+}
+
+function writePicture(id, picture, stamp) {  //repeates above code , needs correction
+       id= document.createTextNode(id);
+       mess=document.createTextNode(picture);
+       stamp=document.createTextNode(stamp);
+       empty=document.createTextNode("  ");
+       const li = document.createElement('li');
+       const h4 = document.createElement('h4');
+       h4.appendChild(id);
+       h4.appendChild(empty);
+       h4.appendChild(stamp);
+       let img = document.createElement('img'); 
+        img.src =picture
+      li.appendChild(img);
+       document.querySelector(".messages").append(h4); 
+       document.querySelector(".messages").append(li); 
+
+
 
 }
 
