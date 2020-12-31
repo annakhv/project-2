@@ -108,7 +108,6 @@ def message(data):
        info={'user' : user,
               'picture': message,
               'stamp': stamp
-
         }
     else:  
        info = { 'user' : user,
@@ -126,8 +125,10 @@ def message(data):
         if len(textList) > 100:
            textList.remove[0]
     if len(message) > 2000:
+        print("this is picture ")
         emit('announce message', {'user' : user ,'picture': message, 'stamp': stamp}, room=room )
     else: 
-         emit('announce message', {'user' : user ,'message': message, 'stamp': stamp}, room=room )
+        print('this is mesage')
+        emit('announce message', {'user' : user ,'message': message, 'stamp': stamp}, room=room )
 
 

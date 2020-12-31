@@ -164,6 +164,7 @@ socket.on("send history", function (data) {
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector("#file").addEventListener('change', function (event) {
     //sending image data as message
+    console.log("check here");
     var reader = new FileReader();
     reader.addEventListener('load', function (event) {
       result = event.target.result;
@@ -171,7 +172,6 @@ document.addEventListener('DOMContentLoaded', function () {
       document.querySelector('#chatRoom').onclick = function (event) {
         event.preventDefault();
         document.querySelector('#message').innerHTML = result;
-        console.log(result.length);
         sendMessage();
         document.querySelector('#message').innerHTML = "";
       };
@@ -187,8 +187,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function sendMessage() {
-  console.log("seeeeend");
   var text = document.querySelector('#message').value;
+  console.log(text);
   document.querySelector('#chatRoom').reset();
   socket.emit("message", {
     'user': userName,
@@ -204,8 +204,10 @@ socket.on("announce message", function (data) {
 
   if (data.hasOwnProperty('message')) {
     var _mess = data.message;
+    console.log("printmessage");
     writeMessage(person, _mess, stamp);
   } else {
+    console.log("printpicture");
     var pic = data.picture;
     writePicture(person, pic, stamp);
   }
@@ -220,10 +222,7 @@ function writeMessage(id, text, stamp) {
   var h4 = document.createElement('h4');
   h4.appendChild(id);
   h4.appendChild(empty);
-  h4.appendChild(stamp); // var img = document.createElement('img'); 
-  //  img.src =text
-  //   li.appendChild(img);
-
+  h4.appendChild(stamp);
   li.appendChild(mess);
   document.querySelector(".messages").append(h4);
   document.querySelector(".messages").append(li);
@@ -241,6 +240,8 @@ function writePicture(id, picture, stamp) {
   h4.appendChild(empty);
   h4.appendChild(stamp);
   var img = document.createElement('img');
+  img.style.width = '390px';
+  img.style.height = 'auto';
   img.src = picture;
   li.appendChild(img);
   document.querySelector(".messages").append(h4);
@@ -326,8 +327,6 @@ function logOutUser(user) {
 }
 
 function deleteOneUser(user, ul, names) {
-  console.log(user);
-
   for (i = 0; i < names.length; i++) {
     if (names[i].innerHTML === user) {
       ul.removeChild(names[i]);
@@ -338,14 +337,11 @@ function deleteOneUser(user, ul, names) {
 
 function deleteUsers() {
   var ul = document.getElementById("thisRoomUsers");
-  console.log(ul);
   var names = ul.getElementsByTagName('li');
-  console.log(names);
 
   if (names.length > 0) {
     for (i = names.length - 1; i >= 0; i--) {
       // doing deletion backwards not to  mix things  during deletion
-      console.log(names[i]);
       ul.removeChild(names[i]);
     }
   }
@@ -356,12 +352,21 @@ function writeHistory(info) {
     for (i = 0; i < info.length; i++) {
       data = info[i];
       user = data["user"];
-      text = data["text"];
       stamp = data["stamp"];
-      user = document.createTextNode(user);
-      mess = document.createTextNode(text);
+
+      if (data.hasOwnProperty('text')) {
+        text = data["text"];
+        var mess = document.createTextNode(text);
+      } else {
+        var mess = document.createElement('img');
+        mess.style.width = '390px';
+        mess.style.height = 'auto';
+        mess.src = data['picture'];
+      }
+
       stamp = document.createTextNode(stamp);
       empty = document.createTextNode("  ");
+      user = document.createTextNode(user);
       var li = document.createElement('li');
       var h4 = document.createElement('h4');
       h4.appendChild(user);
