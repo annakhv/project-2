@@ -59,6 +59,11 @@ main{
     position: absolute;
 
 }
+
+#thisRoomUsers{
+    max-height: 300px;
+    overflow: auto;
+}
 .button1 {
     
     background-color: rgb(68, 201, 206);

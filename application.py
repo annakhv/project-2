@@ -32,15 +32,22 @@ def existingChannels(data):
     for id in users:
         if id != request.sid:
            savedUsers.append(users[id])
-    print(savedUsers)
     emit("existing channels",{'existing': savedChannels, 'existingUsers': savedUsers} , room=request.sid)
 
 @socketio.on("disconnect")
 def disconnect():
     user= users[request.sid]
     del users[request.sid] 
-     
+    if usersInRoom != {}:
+       for room in  usersInRoom: # if disconnection happens we have to move user from room where he was;
+           if usersInRoom[room] != []:
+               for  obj  in usersInRoom[room]:
+                   print(obj)
+                   if obj['name'] == user and obj['id'] == request.sid:  # we need to know specific user who leaves  because  otherwise we might delete user in  other room(using same usernames is not prohibited)
+                       usersInRoom[room].remove(obj)              
+    print("disconnect")
     emit('announce user disconnect', {'user': user}, broadcast=True)
+
 
 @socketio.on('create')
 def create(data):
@@ -61,22 +68,28 @@ def show(data):
 
 @socketio.on('join')
 def on_join(data):
-    
     user = data['user']
     room = data['room']
+    uniqueUser = {
+          "name" : user,
+           "id"  : request.sid
+    }
     if usersInRoom.get(room) != None:
         userList=usersInRoom[room]
-        userList.append(user)
+        userList.append(uniqueUser)
     else: 
         usersInRoom[room]=[]    
-        usersInRoom[room].append(user)
+        usersInRoom[room].append(uniqueUser)
     join_room(room)
     emit('userJoined', {'user': user}, room=room)
 
 @socketio.on('getHistory')
 def history(data):
     room=data['room']
-    usersInfo=usersInRoom[room]
+    usersobj=usersInRoom[room]
+    usersInfo=[]
+    for obj in usersobj:
+        usersInfo.append(obj['name'])
     if roomInfo.get(room)!= None:
         info=roomInfo[room]
     else: 
@@ -89,9 +102,10 @@ def history(data):
 def on_leave(data):
     user= users[request.sid]
     room = data['room']
-    print(usersInRoom[room])
-    usersInRoom[room].remove(user)
-    print(usersInRoom[room])
+    thisRoomUsers=usersInRoom[room]
+    for obj in thisRoomUsers:
+        if obj['name'] == user and obj['id'] == request.sid:
+            thisRoomUsers.remove(obj)
     leave_room(room)
     emit('userLeft', {'user': user}, room=room)
 

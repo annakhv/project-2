@@ -11,7 +11,7 @@ const userName= user;
 
 
 document.addEventListener('DOMContentLoaded',  function() {
-  name()
+               name()
 });
 
 function name() {
@@ -27,11 +27,12 @@ socket.emit('userConnects', {'user': userName});
 });
 
 socket.on("announce user", function(data) {
-    one=data.user;
-    addUsers(one)
+    anyuser=data.user;
+    addUsers(anyuser)
 });
 
 });
+
 
 window.onload= function(){
     socket.emit("existingChannels", {'user': userName})
@@ -106,7 +107,6 @@ function oneChannel(name) {
        a.setAttribute('data-page', name);
        const linkText=document.createTextNode(name);
         a.appendChild(linkText);
-       //const url=`channel/${data.channel}`;
        a.href=""; 
        const button=document.createElement('button'); 
        button.appendChild(a);
@@ -164,9 +164,7 @@ socket.emit('getHistory', { 'room':room });
 socket.on("send history", function(data) {
    writeHistory(data.roomInfo)
    const users=data.usersInfo;
-   console.log(users);
    users.pop(); //delete last user to avoid duplication 
-       console.log(users);
     if (users.length>0){
        for(i=0; i<users.length; i++){
            thisRoomUser(users[i]);
@@ -176,25 +174,27 @@ socket.on("send history", function(data) {
 
 document.addEventListener('DOMContentLoaded', function() {
 document.querySelector("#file").addEventListener('change', function(event){ //sending image data as message
-        console.log("check here")
-     
-      
+         event.preventDefault()
         var reader=new FileReader();
         reader.addEventListener('load', function(event) {
         result= event.target.result;
-        document.querySelector('#chatRoom').onclick = function(event){
+        console.log("inside change function");
         event.preventDefault()
-        document.querySelector('#message').innerHTML=result;
-        sendMessage()
-        document.querySelector('#message').innerHTML="";
-        
-     
+        let answer=confirm("answer OK to send this file" );
+        if (answer === true){
+           document.querySelector('#message').innerHTML=result;
+           sendMessage()
+           document.querySelector('#message').innerHTML="";
         }
-     
+      
      });
         reader.readAsDataURL(event.target.files[0]);
+  
+       
          
     } );
+   
+    
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -207,7 +207,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function sendMessage() {
     
      const text=document.querySelector('#message').value;
-    console.log(text);
     document.querySelector('#chatRoom').reset();
     socket.emit("message", {'user': userName, 'text': text, 'room': window.var});
 
@@ -215,79 +214,65 @@ function sendMessage() {
 }
 
 socket.on("announce message", function(data) {
-    console.log("message is recieved");
     const stamp=data.stamp;
     const person=data.user;
     if (data.hasOwnProperty('message')){
        const  mess=data.message;
        console.log("printmessage");
-       writeMessage(person, mess, stamp);
+       writeTitle(person, stamp);
+       writeMessage( mess);
     }
     else{
         console.log("printpicture");
-       const pic=data.picture;
-       writePicture(person, pic, stamp)
+        const pic=data.picture;
+        writeTitle(person, stamp);
+        writePicture( pic)
     }
 });
 
+function writeTitle(id,stamp){
+    id= document.createTextNode(id);
+    stamp=document.createTextNode(stamp);
+    empty=document.createTextNode("  ");
+    const h4 = document.createElement('h4');
+    h4.appendChild(id);
+    h4.appendChild(empty);
+    h4.appendChild(stamp);
+    document.querySelector(".messages").append(h4); 
+}
 
-function writeMessage(id, text, stamp) {
-       id= document.createTextNode(id);
+function writeMessage( text) {
        mess=document.createTextNode(text);
-       stamp=document.createTextNode(stamp);
-       empty=document.createTextNode("  ");
        const li = document.createElement('li');
-       const h4 = document.createElement('h4');
-       h4.appendChild(id);
-       h4.appendChild(empty);
-       h4.appendChild(stamp);
-       li.appendChild(mess);
-       document.querySelector(".messages").append(h4); 
+       li.appendChild(mess); 
        document.querySelector(".messages").append(li); 
 
 }
 
-function writePicture(id, picture, stamp) {  //repeates above code , needs correction
-       id= document.createTextNode(id);
+function writePicture( picture) {  
+      
        mess=document.createTextNode(picture);
-       stamp=document.createTextNode(stamp);
-       empty=document.createTextNode("  ");
        const li = document.createElement('li');
-       const h4 = document.createElement('h4');
-       h4.appendChild(id);
-       h4.appendChild(empty);
-       h4.appendChild(stamp);
        let img = document.createElement('img'); 
        img.style.width = '390px';
        img.style.height='auto';
        img.src =picture
-        li.appendChild(img);
-       document.querySelector(".messages").append(h4); 
+       li.appendChild(img);
        document.querySelector(".messages").append(li); 
 
 
 
 }
 
-/* document.addEventListener('DOMContentLoaded', function() {
-    document.querySelector('#back').addEventListener('click', function(event){
-                          event.preventDefault()
-                          back()
-                          
-    });
-});
 
-*/
 function forward(room){
  
        document.querySelector("#form").classList.add("hidden");
        document.querySelector("#chatRoom").classList.remove("hidden");
        document.querySelector("#list").classList.add("hidden");
        document.querySelector("#create").classList.add("hidden");
-      /* document.querySelector("#lastRow").classList.add("hidden"); */
        document.querySelector("#userTitle").classList.add("hidden");
        document.querySelector("#userList").classList.add("hidden");
-       /*document.querySelector("#back").classList.remove("hidden"); */
         document.querySelector("#mess").classList.remove("hidden");
         document.querySelector("#roomUsers").classList.remove("hidden");
         join(room);
@@ -311,10 +296,8 @@ function back() {
        document.querySelector("#chatRoom").classList.add("hidden");
        document.querySelector("#list").classList.remove("hidden");
        document.querySelector("#create").classList.remove("hidden");
-     /*  document.querySelector("#lastRow").classList.remove("hidden"); */
        document.querySelector("#userTitle").classList.remove("hidden");
        document.querySelector("#userList").classList.remove("hidden");
-   /*    document.querySelector("#back").classList.add("hidden");   */
        document.querySelector("#roomUsers").classList.add("hidden");
        document.querySelector("#mess").classList.add("hidden");
        
@@ -341,9 +324,10 @@ socket.on("userLeft", function(data) {
 
 
 function logOutUser(user) {
+    console.log("leaveee user ");
     const ul = document.getElementById("thisRoomUsers");
     const names =ul.getElementsByTagName('li');
-    deleteOneUser(user, names, ul)
+    deleteOneUser(user,  ul, names)
      
 }
 
@@ -376,28 +360,16 @@ function writeHistory(info) {
             data=info[i];
             user=data["user"]
             stamp=data["stamp"]
+             writeTitle(user,stamp)
             if (data.hasOwnProperty('text')) {
                 text=data["text"]     
-                var mess=document.createTextNode(text);
+                writeMessage(text)
             }
             else{
-                var mess = document.createElement('img'); 
-                 mess.style.width = '390px';
-                 mess.style.height='auto';
-                mess.src =data['picture']
+                 picture=data["picture"]  
+                 writePicture(picture)
 
             }
-            stamp=document.createTextNode(stamp);
-            empty=document.createTextNode("  ");
-            user= document.createTextNode(user);
-            const li = document.createElement('li');
-            const h4 = document.createElement('h4');
-            h4.appendChild(user);
-            h4.appendChild(empty);
-            h4.appendChild(stamp);
-            li.appendChild(mess);
-            document.querySelector(".messages").append(h4); 
-            document.querySelector(".messages").append(li)
    
       }
     }
