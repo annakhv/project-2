@@ -40,11 +40,13 @@ def disconnect():
     del users[request.sid] 
     if usersInRoom != {}:
        for room in  usersInRoom: # if disconnection happens we have to move user from room where he was;
-           if usersInRoom[room] != []:
+          if usersInRoom[room] != []:
                for  obj  in usersInRoom[room]:
-                   print(obj)
-                   if obj['name'] == user and obj['id'] == request.sid:  # we need to know specific user who leaves  because  otherwise we might delete user in  other room(using same usernames is not prohibited)
-                       usersInRoom[room].remove(obj)              
+                  print(obj)
+                  if obj['name'] == user and obj['id'] == request.sid:  # we need to know specific user who leaves  because  otherwise we might delete user in  other room(using same usernames is not prohibited)
+                      usersInRoom[room].remove(obj) 
+                       
+                     
     print("disconnect")
     emit('announce user disconnect', {'user': user}, broadcast=True)
 
@@ -100,6 +102,7 @@ def history(data):
 
 @socketio.on('leave')
 def on_leave(data):
+    print("leaves")
     user= users[request.sid]
     room = data['room']
     thisRoomUsers=usersInRoom[room]
